@@ -34,7 +34,6 @@ static volatile struct limine_smp_request smp_request = {
 static void halt() {
     for (;;) {
         __asm__ ("hlt");
-        logfn("%d unhalted!\n", LocalAPIC::lapicID());
     }
 }
 
@@ -156,6 +155,7 @@ void initializeProcessors() {
 
     for (auto i = 0UL; i < resp->cpu_count; i++) {
         CPUs[i].apicID = resp->cpus[i]->lapic_id;
+        CPUs[i].cliCount = 1;
 
         if (resp->cpus[i]->lapic_id == resp->bsp_lapic_id)
             continue;
@@ -185,8 +185,9 @@ extern "C" void OtherProcessorMain(limine_smp_info*) {
     asm volatile("movq %0, %%cr3" :: "r" (
         toPhysical(HHVAddress{(uint64_t)KernelPageTable})
     ));
+
     SMP::setAPICBase();
-    // LocalAPIC::initLAPIC();
+    LocalAPIC::initLAPIC();
 
     SharedMain();
 }
@@ -207,7 +208,7 @@ extern "C" void KernelMain() {
     initializeProcessors();
 
     disableAllLegacyInterrupts();
-    // LocalAPIC::initLAPIC();
+    LocalAPIC::initLAPIC();
 
     SharedMain();
 }

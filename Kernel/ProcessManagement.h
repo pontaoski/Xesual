@@ -10,6 +10,7 @@ namespace ProcessManagement
 struct CPUState {
     int apicID;
     int32_t cliCount;
+    bool wereInterruptsEnabled;
 };
 
 extern uint32_t CPUCount;
@@ -25,18 +26,28 @@ inline CPUState* thisCPU()
     return nullptr;
 }
 
+inline uint64_t eflags(void)
+{
+  uint64_t eflags;
+  asm volatile("pushfq; popq %0" : "=r" (eflags));
+  return eflags;
+}
+
 inline void pushCLI()
 {
+    auto flags = eflags();
     asm volatile("cli");
+
+    if (thisCPU()->cliCount == 0)
+        thisCPU()->wereInterruptsEnabled = flags & 0x200;
+
     thisCPU()->cliCount++;
 }
 
 inline void popCLI()
 {
-    // TODO: validate in cli
-    // TODO: validate cliCount >= 0
     thisCPU()->cliCount--;
-    if (thisCPU()->cliCount == 0)
+    if (thisCPU()->cliCount == 0 && thisCPU()->wereInterruptsEnabled)
         asm volatile("sti");
 }
 
