@@ -49,6 +49,7 @@ namespace PhysicalMemoryManagement
     }
 
     void init();
+    void thereIsNowMoreThanOneProcessor();
 
     void freeRange(void* start, void* end);
     void freePage(uintptr_t v);

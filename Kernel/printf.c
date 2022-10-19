@@ -859,6 +859,22 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
 
 ///////////////////////////////////////////////////////////////////////////////
 
+extern void lockLog();
+extern void unlockLog();
+
+int logfn(const char* format, ...) {
+  lockLog();
+
+  va_list va;
+  va_start(va, format);
+  char buffer[1];
+  const int ret = _vsnprintf(_out_char, buffer, (size_t)-1, format, va);
+  va_end(va);
+
+  unlockLog();
+  return ret;
+}
+
 int printf_(const char* format, ...)
 {
   va_list va;

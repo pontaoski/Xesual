@@ -26,6 +26,11 @@ void init()
     Memory.freeList = nullptr;
 }
 
+void thereIsNowMoreThanOneProcessor()
+{
+    Memory.usingLock = true;
+}
+
 void freeRange(void* start, void* end)
 {
     for (

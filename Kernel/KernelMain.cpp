@@ -1,7 +1,10 @@
 #include "Limine/limine.h"
+#include "MiscFunctions.h"
 #include "PhysicalMemoryManagement.h"
 #include "VirtualMemoryManagement.h"
 #include "Paging.h"
+#include "SMP.h"
+#include "ProcessManagement.h"
 #include "printf.h"
 
 extern char KernelStart[];
@@ -22,6 +25,11 @@ static volatile struct limine_kernel_address_request kernel_address_request = {
     .revision = 0
 };
 
+static volatile struct limine_smp_request smp_request = {
+    .id = LIMINE_SMP_REQUEST,
+    .revision = 0,
+};
+
 static void halt() {
     for (;;) {
         __asm__ ("hlt");
@@ -36,13 +44,13 @@ void dumpPageTable(PageTableRef root, int level = 1)
     };
 
     for (int i = 0; i < level-1; i++) _putchar(' ');
-    printf("level %d\n", level);
+    logfn("level %d\n", level);
     for (int i = 0; i < 512; i++) {
         if (!root[i].hl.isPresent) {
             continue;
         }
         for (int i = 0; i < level; i++) _putchar(' ');
-        printf("%d to %llx\n", i, root[i].hl.physicalAddress << PhysicalMemoryManagement::PageShift);
+        logfn("%d to %llx\n", i, root[i].hl.physicalAddress << PhysicalMemoryManagement::PageShift);
         if (level < 4) {
             dumpPageTable(pe2v(root[i]), level + 1);
         }
@@ -97,6 +105,9 @@ void checkThatLimineGaveUsEverythingWeNeed()
     if (kernel_address_request.response == nullptr) {
         halt();
     }
+    if (smp_request.response == nullptr) {
+        halt();
+    }
 }
 
 void initializeVirtualMemory(uint64_t maxPhysicalMemory)
@@ -127,12 +138,60 @@ void initializeVirtualMemory(uint64_t maxPhysicalMemory)
     ));
 }
 
+extern "C" void OtherProcessorMain(limine_smp_info* info);
+
+void initializeProcessors() {
+    using namespace ProcessManagement;
+
+    auto resp = smp_request.response;
+    CPUCount = resp->cpu_count;
+    CPUs = (CPUState*)PhysicalMemoryManagement::allocatePage().asPtr();
+    memset((void*)CPUs, 0, PhysicalMemoryManagement::PageSize);
+
+    for (auto i = 0UL; i < resp->cpu_count; i++) {
+        CPUs[i].apicID = resp->cpus[i]->lapic_id;
+
+        if (resp->cpus[i]->lapic_id == resp->bsp_lapic_id)
+            continue;
+
+        __atomic_store_n(&resp->cpus[i]->goto_address, OtherProcessorMain, __ATOMIC_RELAXED);
+    }
+}
+
+void SharedMain() {
+    SMP::setAPICBase();
+
+    logfn("Processor %d is up and running!\n", SMP::lapicID());
+
+    halt();
+}
+
+extern "C" void OtherProcessorMain(limine_smp_info*) {
+    using namespace PhysicalMemoryManagement;
+    using namespace VirtualMemoryManagement;
+
+    // we should get the other processors all using the same table
+    asm volatile("movq %0, %%cr3" :: "r" (
+        toPhysical(HHVAddress{(uint64_t)KernelPageTable})
+    ));
+
+    SharedMain();
+}
+
+extern "C" void initLogLock();
+
 extern "C" void KernelMain() {
+    using namespace PhysicalMemoryManagement;
+    using namespace VirtualMemoryManagement;
+
     checkThatLimineGaveUsEverythingWeNeed();
     const auto maxPhysicalAddress = initByAddingUsablePagesToMemoryManagement();
     initializeVirtualMemory(maxPhysicalAddress);
 
-    printf("All done! :)\n");
+    initLogLock();
+    initializeProcessors();
 
-    halt();
+    PhysicalMemoryManagement::thereIsNowMoreThanOneProcessor();
+
+    SharedMain();
 }

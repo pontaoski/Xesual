@@ -48,6 +48,7 @@ extern "C" {
  */
 void _putchar(char character);
 
+int logfn(const char* format, ...);
 
 /**
  * Tiny printf implementation
