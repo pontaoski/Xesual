@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LocalAPIC.h"
 #include "SMP.h"
 #include <cstdint>
 
@@ -17,7 +18,7 @@ extern CPUState* CPUs;
 inline CPUState* thisCPU()
 {
     for (auto i = 0U; i < CPUCount; i++) {
-        if (CPUs[i].apicID == SMP::lapicID()) {
+        if (CPUs[i].apicID == LocalAPIC::lapicID()) {
             return &CPUs[i];
         }
     }

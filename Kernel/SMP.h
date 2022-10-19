@@ -22,10 +22,4 @@ inline PhysicalMemoryManagement::PAddress getAPICBase()
     return PhysicalMemoryManagement::PAddress{(eax & 0xfffff000) | ((edx & 0x0fUL) << 32)};
 }
 
-inline int lapicID()
-{
-    volatile auto lapic = (uint32_t*)PhysicalMemoryManagement::toVirtual(getAPICBase()).asPtr();
-    return lapic[0x0020/4] >> 24;
-}
-
 }

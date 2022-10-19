@@ -1,4 +1,5 @@
 #include "Limine/limine.h"
+#include "LocalAPIC.h"
 #include "MiscFunctions.h"
 #include "PhysicalMemoryManagement.h"
 #include "VirtualMemoryManagement.h"
@@ -33,6 +34,7 @@ static volatile struct limine_smp_request smp_request = {
 static void halt() {
     for (;;) {
         __asm__ ("hlt");
+        logfn("%d unhalted!\n", LocalAPIC::lapicID());
     }
 }
 
@@ -148,6 +150,10 @@ void initializeProcessors() {
     CPUs = (CPUState*)PhysicalMemoryManagement::allocatePage().asPtr();
     memset((void*)CPUs, 0, PhysicalMemoryManagement::PageSize);
 
+    // enable using the lock to ensure that we don't explode when
+    // more than one processor wants to allocate a page
+    PhysicalMemoryManagement::thereIsNowMoreThanOneProcessor();
+
     for (auto i = 0UL; i < resp->cpu_count; i++) {
         CPUs[i].apicID = resp->cpus[i]->lapic_id;
 
@@ -158,10 +164,15 @@ void initializeProcessors() {
     }
 }
 
-void SharedMain() {
-    SMP::setAPICBase();
+void disableAllLegacyInterrupts()
+{
+    // mask all interrupts from the 8259A controllers
+    outb(0x20+1, 0xFF);
+    outb(0xA0+1, 0xFF);
+}
 
-    logfn("Processor %d is up and running!\n", SMP::lapicID());
+void SharedMain() {
+    logfn("Processor %d is up and running!\n", LocalAPIC::lapicID());
 
     halt();
 }
@@ -174,6 +185,8 @@ extern "C" void OtherProcessorMain(limine_smp_info*) {
     asm volatile("movq %0, %%cr3" :: "r" (
         toPhysical(HHVAddress{(uint64_t)KernelPageTable})
     ));
+    SMP::setAPICBase();
+    // LocalAPIC::initLAPIC();
 
     SharedMain();
 }
@@ -189,9 +202,12 @@ extern "C" void KernelMain() {
     initializeVirtualMemory(maxPhysicalAddress);
 
     initLogLock();
+    SMP::setAPICBase();
+    LocalAPIC::setLAPICAddress();
     initializeProcessors();
 
-    PhysicalMemoryManagement::thereIsNowMoreThanOneProcessor();
+    disableAllLegacyInterrupts();
+    // LocalAPIC::initLAPIC();
 
     SharedMain();
 }
