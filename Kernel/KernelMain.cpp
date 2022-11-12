@@ -6,6 +6,7 @@
 #include "Paging.h"
 #include "SMP.h"
 #include "ProcessManagement.h"
+#include "Traps.h"
 #include "printf.h"
 
 extern char KernelStart[];
@@ -156,6 +157,7 @@ void initializeProcessors() {
     for (auto i = 0UL; i < resp->cpu_count; i++) {
         CPUs[i].apicID = resp->cpus[i]->lapic_id;
         CPUs[i].cliCount = 1;
+        CPUs[i].currentProcess = nullptr;
 
         if (resp->cpus[i]->lapic_id == resp->bsp_lapic_id)
             continue;
@@ -173,6 +175,11 @@ void disableAllLegacyInterrupts()
 
 void SharedMain() {
     logfn("Processor %d is up and running!\n", LocalAPIC::lapicID());
+
+    Traps::loadIDTTable();
+    ProcessManagement::popCLI();
+
+    // halt();
 
     halt();
 }
@@ -205,6 +212,7 @@ extern "C" void KernelMain() {
     initLogLock();
     SMP::setAPICBase();
     LocalAPIC::setLAPICAddress();
+    Traps::setupIDTTable();
     initializeProcessors();
 
     disableAllLegacyInterrupts();

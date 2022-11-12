@@ -7,14 +7,31 @@
 namespace ProcessManagement
 {
 
+struct ProcessInfo;
+
 struct CPUState {
     int apicID;
     int32_t cliCount;
     bool wereInterruptsEnabled;
+    ProcessInfo* currentProcess;
+};
+
+struct ProcessInfo {
+    enum State {
+        Unused = 0,
+        Runnable,
+        Running,
+    };
+
+    PageTableRef pageTable;
+    State state;
 };
 
 extern uint32_t CPUCount;
 extern CPUState* CPUs;
+
+void init();
+void schedule();
 
 inline CPUState* thisCPU()
 {
