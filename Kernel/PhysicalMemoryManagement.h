@@ -53,7 +53,9 @@ namespace PhysicalMemoryManagement
 
     void freeRange(void* start, void* end);
     void freePage(uintptr_t v);
+    void freePages(uintptr_t v, uint64_t numPages);
     HHVAddress allocatePage();
+    HHVAddress allocatePage(uint64_t size);
 
     inline uint64_t physicalToVirtual(uint64_t addr) { return addr + HigherHalfDirectMapOffset; };
     inline uint64_t virtualToPhysical(uint64_t addr) { return addr - HigherHalfDirectMapOffset; };
