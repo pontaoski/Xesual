@@ -1,4 +1,5 @@
 #include "Traps.h"
+#include "GDT.h"
 #include "LocalAPIC.h"
 #include "TrapNumbers.h"
 #include "printf.h"
@@ -61,7 +62,7 @@ void setupIDTTable()
 {
 	// fifth entry in limine GDT: https://github.com/limine-bootloader/limine/blob/trunk/PROTOCOL.md
 	// 64-bit code selector
-	const int CodeSelector = 0x0028;
+	const int CodeSelector = offsetof(GDT::Table, kernelCode);
 
 	IDTEntries[0].setGate(_isr0,  CodeSelector, IDTEntryFlags::interruptGate());
 	IDTEntries[1].setGate(_isr1,  CodeSelector, IDTEntryFlags::interruptGate());

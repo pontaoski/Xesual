@@ -176,6 +176,9 @@ void disableAllLegacyInterrupts()
 void SharedMain() {
     logfn("Processor %d is up and running!\n", LocalAPIC::lapicID());
 
+    ProcessManagement::thisCPU()->table.init();
+    ProcessManagement::thisCPU()->table.install();
+
     Traps::loadIDTTable();
     ProcessManagement::popCLI();
 

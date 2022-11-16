@@ -2,6 +2,7 @@
 
 #include "LocalAPIC.h"
 #include "SMP.h"
+#include "GDT.h"
 #include <cstdint>
 
 namespace ProcessManagement
@@ -14,6 +15,7 @@ struct CPUState {
     int32_t cliCount;
     bool wereInterruptsEnabled;
     ProcessInfo* currentProcess;
+    GDT::Table table;
 };
 
 struct ProcessInfo {
