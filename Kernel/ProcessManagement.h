@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LocalAPIC.h"
+#include "PhysicalMemoryManagement.h"
 #include "SMP.h"
 #include "GDT.h"
 #include <cstdint>
@@ -10,12 +11,15 @@ namespace ProcessManagement
 
 struct ProcessInfo;
 
+constexpr const int StackSize = 16 * PhysicalMemoryManagement::PageSize;
+
 struct CPUState {
     int apicID;
     int32_t cliCount;
     bool wereInterruptsEnabled;
     ProcessInfo* currentProcess;
     GDT::Table table;
+    void* stack;
 };
 
 struct ProcessInfo {

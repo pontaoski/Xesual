@@ -17,23 +17,7 @@ void init() {
 }
 
 void schedule() {
-    auto cpu = thisCPU();
 
-    for (;;) {
-        asm volatile ("sti");
-
-        ProcessTableSpinlock.acquire();
-        for (auto p = ProcessTable; p < &ProcessTable[64]; p++) {
-            if (p->state == ProcessInfo::Runnable)
-                continue;
-
-            cpu->currentProcess = p;
-            p->state = ProcessInfo::Running;
-
-            cpu->currentProcess = nullptr;
-        }
-        ProcessTableSpinlock.release();
-    }
 }
 
 }

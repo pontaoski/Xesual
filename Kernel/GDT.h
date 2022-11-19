@@ -213,7 +213,7 @@ struct Table {
     SystemEntry theEntryForTheTSS;
     TSSEntry theTSSEntryItself;
 
-    void init()
+    void init(uintptr_t stackLocation)
     {
         nullEntry = UserEntry(0, 0, UserAccessByte(), Flags());
         kernelCode = UserEntry(0xffffffff, 0, UserAccessByte(CodeAllowRead, CodeSeg, Ring0), Flags::longModeCode());
