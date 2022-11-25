@@ -4,6 +4,8 @@
 #include "PhysicalMemoryManagement.h"
 #include "SMP.h"
 #include "GDT.h"
+#include "TrapNumbers.h"
+#include <cstddef>
 #include <cstdint>
 
 namespace ProcessManagement
@@ -18,9 +20,18 @@ struct CPUState {
     int32_t cliCount;
     bool wereInterruptsEnabled;
     ProcessInfo* currentProcess;
-    GDT::Table table;
     void* stack;
+    GDT::Table table;
+
+    /// used for preserving in syscalls
+    uint64_t userStack;
+
+    void setKernelGSBase();
+    void setSyscallRIP();
 };
+
+static_assert(UserStackOffset == offsetof(CPUState, userStack));
+static_assert(KernelStackOffset == offsetof(CPUState, stack));
 
 struct ProcessInfo {
     enum State {

@@ -9,7 +9,7 @@ namespace Traps
 void setupIDTTable();
 void loadIDTTable();
 
-struct Registers {
+struct InterruptRegisters {
 	uint64_t r15, r14, r13, r12;
 	uint64_t r11, r10, r9, r8;
 	uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
@@ -19,10 +19,16 @@ struct Registers {
 	uint64_t rip, cs, rflags, rsp, ss;
 };
 
+struct SyscallRegisters {
+	uint64_t r15, r14, r13, r12;
+	uint64_t r11, r10, r9, r8;
+	uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
+};
+
 extern "C"
 {
 
-using InterruptHandler = Traps::Registers*(*)(Traps::Registers*);
+using InterruptHandler = Traps::InterruptRegisters*(*)(Traps::InterruptRegisters*);
 
 }
 
@@ -66,60 +72,60 @@ struct IDTEntry {
 extern "C"
 {
 
-extern Traps::Registers* _isr0(Traps::Registers*);
-extern Traps::Registers* _isr1(Traps::Registers*);
-extern Traps::Registers* _isr2(Traps::Registers*);
-extern Traps::Registers* _isr3(Traps::Registers*);
-extern Traps::Registers* _isr4(Traps::Registers*);
-extern Traps::Registers* _isr5(Traps::Registers*);
-extern Traps::Registers* _isr6(Traps::Registers*);
-extern Traps::Registers* _isr7(Traps::Registers*);
-extern Traps::Registers* _isr8(Traps::Registers*);
-extern Traps::Registers* _isr9(Traps::Registers*);
-extern Traps::Registers* _isr10(Traps::Registers*);
-extern Traps::Registers* _isr11(Traps::Registers*);
-extern Traps::Registers* _isr12(Traps::Registers*);
-extern Traps::Registers* _isr13(Traps::Registers*);
-extern Traps::Registers* _isr14(Traps::Registers*);
-extern Traps::Registers* _isr15(Traps::Registers*);
-extern Traps::Registers* _isr16(Traps::Registers*);
-extern Traps::Registers* _isr17(Traps::Registers*);
-extern Traps::Registers* _isr18(Traps::Registers*);
-extern Traps::Registers* _isr19(Traps::Registers*);
-extern Traps::Registers* _isr20(Traps::Registers*);
-extern Traps::Registers* _isr21(Traps::Registers*);
-extern Traps::Registers* _isr22(Traps::Registers*);
-extern Traps::Registers* _isr23(Traps::Registers*);
-extern Traps::Registers* _isr24(Traps::Registers*);
-extern Traps::Registers* _isr25(Traps::Registers*);
-extern Traps::Registers* _isr26(Traps::Registers*);
-extern Traps::Registers* _isr27(Traps::Registers*);
-extern Traps::Registers* _isr28(Traps::Registers*);
-extern Traps::Registers* _isr29(Traps::Registers*);
-extern Traps::Registers* _isr30(Traps::Registers*);
-extern Traps::Registers* _isr31(Traps::Registers*);
+extern Traps::InterruptRegisters* _isr0(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr1(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr2(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr3(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr4(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr5(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr6(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr7(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr8(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr9(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr10(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr11(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr12(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr13(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr14(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr15(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr16(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr17(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr18(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr19(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr20(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr21(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr22(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr23(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr24(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr25(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr26(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr27(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr28(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr29(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr30(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr31(Traps::InterruptRegisters*);
 
-extern Traps::Registers* _irq0(Traps::Registers*);
-extern Traps::Registers* _irq1(Traps::Registers*);
-extern Traps::Registers* _irq2(Traps::Registers*);
-extern Traps::Registers* _irq3(Traps::Registers*);
-extern Traps::Registers* _irq4(Traps::Registers*);
-extern Traps::Registers* _irq5(Traps::Registers*);
-extern Traps::Registers* _irq6(Traps::Registers*);
-extern Traps::Registers* _irq7(Traps::Registers*);
-extern Traps::Registers* _irq8(Traps::Registers*);
-extern Traps::Registers* _irq9(Traps::Registers*);
-extern Traps::Registers* _irq10(Traps::Registers*);
-extern Traps::Registers* _irq11(Traps::Registers*);
-extern Traps::Registers* _irq12(Traps::Registers*);
-extern Traps::Registers* _irq13(Traps::Registers*);
-extern Traps::Registers* _irq14(Traps::Registers*);
-extern Traps::Registers* _irq15(Traps::Registers*);
+extern Traps::InterruptRegisters* _irq0(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq1(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq2(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq3(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq4(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq5(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq6(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq7(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq8(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq9(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq10(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq11(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq12(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq13(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq14(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _irq15(Traps::InterruptRegisters*);
 
-extern Traps::Registers* _isr123(Traps::Registers*);
-extern Traps::Registers* _isr124(Traps::Registers*);
-extern Traps::Registers* _isr125(Traps::Registers*);
-extern Traps::Registers* _isr126(Traps::Registers*);
-extern Traps::Registers* ISRForNumber(SyscallInterrupt) (Traps::Registers*);
+extern Traps::InterruptRegisters* _isr123(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr124(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr125(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* _isr126(Traps::InterruptRegisters*);
+extern Traps::InterruptRegisters* ISRForNumber(SyscallInterrupt) (Traps::InterruptRegisters*);
 
 }

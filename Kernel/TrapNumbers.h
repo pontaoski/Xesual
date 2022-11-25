@@ -7,6 +7,9 @@
 #define SyscallInterrupt 128
 #define HaltInterrupt2 2
 
+#define UserStackOffset 208
+#define KernelStackOffset 24
+
 #define LocalAPICAddress _ZN9LocalAPIC5lapicE
 #define CONCAT(a, b) a ## b
 #define ISRForNumber(num) CONCAT(_isr, num)

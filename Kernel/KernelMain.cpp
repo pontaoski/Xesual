@@ -193,6 +193,8 @@ void SharedMain() {
     ProcessManagement::thisCPU()->stack = PhysicalMemoryManagement::allocatePages(ProcessManagement::StackSize).asPtr();
     ProcessManagement::thisCPU()->table.init((uintptr_t)ProcessManagement::thisCPU()->stack);
     ProcessManagement::thisCPU()->table.install();
+    ProcessManagement::thisCPU()->setKernelGSBase();
+    ProcessManagement::thisCPU()->setSyscallRIP();
 
     Traps::loadIDTTable();
     ProcessManagement::popCLI();

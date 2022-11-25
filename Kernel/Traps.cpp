@@ -7,7 +7,7 @@
 extern "C"
 {
 
-void dumpRegisters(Traps::Registers* registers)
+void dumpRegisters(Traps::InterruptRegisters* registers)
 {
 	logfn("r15=%#llx, r14=%#llx, r13=%#llx, r12=%#llx\n", registers->r15, registers->r14, registers->r13, registers->r12);
 	logfn("r11=%#llx, r10=%#llx, r9=%#llx, r8=%#llx\n", registers->r11, registers->r10, registers->r9, registers->r8);
@@ -16,7 +16,7 @@ void dumpRegisters(Traps::Registers* registers)
 	logfn("rip=%#llx, cs=%#llx, rflags=%#llx, rsp=%#llx, ss=%#llx\n", registers->rip, registers->cs, registers->rflags, registers->rsp, registers->ss);
 }
 
-Traps::Registers* TrapHandler(Traps::Registers* registers)
+Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 {
 	switch (registers->interruptNumber) {
 	case SyscallInterrupt:
@@ -27,6 +27,11 @@ Traps::Registers* TrapHandler(Traps::Registers* registers)
 	default:
 		logfn("unhandled interrupt %llx\n", registers->interruptNumber);
 	}
+	return registers;
+}
+
+Traps::SyscallRegisters* KernelSyscallHandler(Traps::SyscallRegisters* registers)
+{
 	return registers;
 }
 
