@@ -132,6 +132,20 @@ void initializeVirtualMemory(uint64_t maxPhysicalMemory)
         map(KernelPageTable, i, resp->physical_base + (i - resp->virtual_base));
     }
 
+    /// We're a higher-half kernel, so the top half of the page table belongs exclusively to the kernel.
+    /// The kernel pages need to be present in every page table (including page tables for userspace code)
+    /// since stuff like interrupts and syscalls transfer control directly to kernel code regardless of which page table is active.
+    /// Thus, we use the kernel page table as a starting point for all userspace page tables.
+    /// This is fine (sans speculative execution exploits) because of the ring-level protection offered by paging.
+    /// Since we'd like to avoid having to update every page table in existence if we need a new top-level
+    /// entry (the ones that are copied by value when shallow-cloning), we go ahead and preallocate the higher-half
+    /// page table entries here.
+    for (int i = 256; i < 512; i++) {
+        if (!KernelPageTable[i].hl.isPresent) {
+            allocatePageTableForTableEntry(&KernelPageTable[i]);
+        }
+    }
+
     /// This hunk of assembly is us taking off the training wheels from Limine, our bootloader:
     /// we write the physical address of the page table to the register cr3 to tell the CPU that this
     /// is the page table that we would like to use now
