@@ -1,20 +1,20 @@
 #include "Traps.h"
 #include "GDT.h"
 #include "LocalAPIC.h"
+#include "Panic!!.h"
+#include "ProcessManagement.h"
 #include "TrapNumbers.h"
 #include "printf.h"
+#include <cstddef>
 
 extern "C"
 {
 
-void dumpRegisters(Traps::InterruptRegisters* registers)
-{
-	logfn("r15=%#llx, r14=%#llx, r13=%#llx, r12=%#llx\n", registers->r15, registers->r14, registers->r13, registers->r12);
-	logfn("r11=%#llx, r10=%#llx, r9=%#llx, r8=%#llx\n", registers->r11, registers->r10, registers->r9, registers->r8);
-	logfn("rbp=%#llx, rdi=%#llx, rsi=%#llx, rdx=%#llx, rcx=%#llx, rbx=%#llx, rax=%#llx\n", registers->rbp, registers->rdi, registers->rsi, registers->rdx, registers->rcx, registers->rbx, registers->rax);
-	logfn("interruptNumber=%#llx, errorCode=%#llx\n", registers->interruptNumber, registers->errorCode);
-	logfn("rip=%#llx, cs=%#llx, rflags=%#llx, rsp=%#llx, ss=%#llx\n", registers->rip, registers->cs, registers->rflags, registers->rsp, registers->ss);
-}
+enum Exceptions: uint64_t {
+	DoubleFault = 8,
+	GeneralProtectionFault = 13,
+	PageFault = 14,
+};
 
 Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 {
@@ -24,8 +24,24 @@ Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 	case LocalAPIC::IRQ0 + LocalAPIC::IRQTimer:
 		LocalAPIC::acknowledgeInterrupt();
 		break;
+	case Exceptions::DoubleFault: {
+		PanicExclamationExclamation("Double fault", registers);
+		break;
+	case Exceptions::GeneralProtectionFault:
+		if (ProcessManagement::thisCPU()->currentProcess == nullptr || registers->cs == offsetof(GDT::Table, kernelCode)) {
+			PanicExclamationExclamation("GPF in kernel code", registers);
+		}
+		// TODO: kill userspace
+		break;
+	case Exceptions::PageFault:
+		if (ProcessManagement::thisCPU()->currentProcess == nullptr || registers->cs == offsetof(GDT::Table, kernelCode)) {
+			PanicExclamationExclamation("Page fault in kernel code", registers);
+		}
+		// TODO: kill userspace
+		break;
+	}
 	default:
-		logfn("unhandled interrupt %llx\n", registers->interruptNumber);
+		logfn("unhandled interrupt %d/%llx\n", registers->interruptNumber, registers->interruptNumber);
 	}
 	return registers;
 }

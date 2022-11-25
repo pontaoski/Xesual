@@ -46,9 +46,9 @@ void CPUState::setSyscallRIP()
 
     // enable using the syscall instruction
     asm volatile (R"(
-        mov 0xc0000080, %%rcx
+        mov $0xc0000080, %%rcx
         rdmsr
-        or 1, %%rax
+        or $1, %%rax
         wrmsr
     )" ::: "rcx", "rax");
     cpuSetMSR(0xC0000082, base, base >> 32);
