@@ -87,4 +87,11 @@ void map(PageTableRef root, uint64_t virtualAddress, uint64_t toPhysical)
     level1Address[level1Index].hl.isWritable = true;
 }
 
+PageTableRef shallowCopy(PageTableRef root)
+{
+    auto addr = allocatePage();
+    memcpy(addr.asPtr(), root, PageSize);
+    return (PageTableRef)addr.asPtr();
+}
+
 }
