@@ -188,19 +188,29 @@ void disableAllLegacyInterrupts()
 }
 
 void SharedMain() {
-    logfn("Processor %d is up and running!\n", LocalAPIC::lapicID());
-
+    logfn("stack! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->stack = PhysicalMemoryManagement::allocatePages(ProcessManagement::StackSize).asPtr();
+    logfn("init! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->table.init((uintptr_t)ProcessManagement::thisCPU()->stack);
+    logfn("install! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->table.install();
+    logfn("gsbase! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->setKernelGSBase();
+    logfn("syscall rip! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->setSyscallRIP();
+    logfn("star register! %d\n", LocalAPIC::lapicID());
+    ProcessManagement::thisCPU()->setStarRegister();
 
     Traps::loadIDTTable();
     ProcessManagement::popCLI();
 
+    if (LocalAPIC::lapicID() == 0) {
+        logfn("starting first process...\n");
+        ProcessManagement::runFirstProcess();
+    }
     // halt();
 
+    logfn("Processor %d is up and running!\n", LocalAPIC::lapicID());
     halt();
 }
 

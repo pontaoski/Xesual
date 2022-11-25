@@ -114,6 +114,7 @@ HHVAddress allocatePages(uint64_t numPages)
                 Memory.lock.release();
             return HHVAddress{(uint64_t)chunk + (uint64_t)PageSize*chunk->numPages};
         }
+        chunk = chunk->next;
     }
 
     if (Memory.usingLock)

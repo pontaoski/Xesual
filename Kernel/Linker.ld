@@ -28,6 +28,12 @@ SECTIONS
         *(.text .text.*)
     } :text
  
+    .userspace : {
+        KEEP(*(.userspace))
+    } :text
+
+    PROVIDE(MyFirstUserspaceEnd = .);
+
     /* Move to the next memory page for .rodata */
     . += CONSTANT(MAXPAGESIZE);
  

@@ -5,6 +5,7 @@
 #include "SMP.h"
 #include "GDT.h"
 #include "TrapNumbers.h"
+#include "Traps.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -28,6 +29,7 @@ struct CPUState {
 
     void setKernelGSBase();
     void setSyscallRIP();
+    void setStarRegister();
 };
 
 static_assert(UserStackOffset == offsetof(CPUState, userStack));
@@ -42,6 +44,7 @@ struct ProcessInfo {
 
     PageTableRef pageTable;
     State state;
+    Traps::SyscallRegisters registers;
 };
 
 extern uint32_t CPUCount;
@@ -49,6 +52,7 @@ extern CPUState* CPUs;
 
 void init();
 void schedule();
+void runFirstProcess();
 
 inline CPUState* thisCPU()
 {

@@ -208,8 +208,8 @@ struct Table {
     UserEntry kernelData;
     UserEntry userCode32;
     UserEntry userData32;
-    UserEntry userData64;
     UserEntry userCode64;
+    UserEntry userData64;
     SystemEntry theEntryForTheTSS;
     TSSEntry theTSSEntryItself;
 
