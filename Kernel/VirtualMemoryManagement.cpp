@@ -50,7 +50,8 @@ bool allocatePageTableForTableEntry(PageTableEntry* entry)
     if (!allocatePageForTableEntry(entry))
         return false;
 
-    memset((void*)((uint64_t)entry->hl.physicalAddress << (uint64_t)PageShift), 0, PageSize);
+    auto addr = toVirtual(PAddress{(uint64_t)entry->hl.physicalAddress << (uint64_t)PageShift});
+    memset(addr.asPtr(), 0, PageSize);
 
     return true;
 }
