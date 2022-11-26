@@ -18,6 +18,7 @@ enum Exceptions: uint64_t {
 
 Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 {
+	logfn("interrupt from %d %llx\n", registers->interruptNumber, registers->rip);
 	switch (registers->interruptNumber) {
 	case SyscallInterrupt:
 		return registers;

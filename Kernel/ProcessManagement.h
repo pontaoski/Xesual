@@ -16,6 +16,14 @@ struct ProcessInfo;
 
 constexpr const int StackSize = 16 * PhysicalMemoryManagement::PageSize;
 
+/// sits at the bottom of a kernel stack
+struct KernelContext {
+    uint64_t rbx, rbp, r12, r13, r14, r15;
+    uint64_t rip;
+};
+
+void Pause(KernelContext** yieldFrom, KernelContext* yieldTo);
+
 struct CPUState {
     int apicID;
     int32_t cliCount;
@@ -26,6 +34,7 @@ struct CPUState {
 
     /// used for preserving in syscalls
     uint64_t userStack;
+    KernelContext* schedulerTask;
 
     void setKernelGSBase();
     void setSyscallRIP();
@@ -38,13 +47,17 @@ static_assert(KernelInterruptStackOffset == offsetof(CPUState, interruptStack));
 struct ProcessInfo {
     enum State {
         Unused = 0,
+        Fresh,
         Runnable,
         Running,
     };
 
     PageTableRef pageTable;
     State state;
-    Traps::SyscallRegisters registers;
+
+    void* kernelStack;
+    KernelContext* kernelTask;
+    Traps::InterruptRegisters* trapFrame;
 };
 
 extern uint32_t CPUCount;
@@ -52,7 +65,8 @@ extern CPUState* CPUs;
 
 void init();
 void schedule();
-void runFirstProcess();
+void createFirstProcess();
+ProcessInfo* allocateProcess();
 
 inline CPUState* thisCPU()
 {

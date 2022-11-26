@@ -203,14 +203,9 @@ void SharedMain() {
     Traps::loadIDTTable();
     ProcessManagement::popCLI();
 
-    if (LocalAPIC::lapicID() == 0) {
-        logfn("starting first process...\n");
-        ProcessManagement::runFirstProcess();
-    }
-    // halt();
-
-    logfn("Processor %d is up and running!\n", LocalAPIC::lapicID());
+    logfn("Processor %d is now going to schedule processes!\n", LocalAPIC::lapicID());
     halt();
+    // ProcessManagement::schedule();
 }
 
 extern "C" void OtherProcessorMain(limine_smp_info*) {

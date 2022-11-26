@@ -1,13 +1,16 @@
 #include "ProcessManagement.h"
+#include "GDT.h"
 #include "MiscFunctions.h"
 #include "PhysicalMemoryManagement.h"
 #include "Spinlock.h"
+#include "Traps.h"
 #include "VirtualMemoryManagement.h"
 #include <cstddef>
 
 
 extern "C" {
 
+extern "C" void TrapRet();
 extern void SyscallHandler();
 
 void __attribute__((section (".userspace"))) __attribute__((naked)) MyFirstUserspace()
@@ -31,6 +34,30 @@ CPUState* CPUs = nullptr;
 
 ProcessInfo ProcessTable[64];
 Spinlock ProcessTableSpinlock;
+
+void __attribute__((naked)) Pause(KernelContext** yieldFrom, KernelContext* yieldTo)
+{
+    asm volatile (R"(
+        pushq %r15
+        pushq %r14
+        pushq %r13
+        pushq %r12
+        pushq %rbp
+        pushq %rbx
+
+        movq %rsp, (%rdi)
+        movq %rsi, %rsp
+
+        popq %rbx
+        popq %rbp
+        popq %r12
+        popq %r13
+        popq %r14
+        popq %r15
+
+        retq
+    )");
+}
 
 void CPUState::setKernelGSBase()
 {
@@ -69,42 +96,97 @@ void init() {
     memset(ProcessTable, 0, sizeof(ProcessInfo) * 64);
 }
 
-// void schedule() {
-//     pushCLI();
-//     ProcessTableSpinlock.acquire();
-
-//     for (auto& process : ProcessTable) {
-//         if (process.state != ProcessInfo::Runnable)
-//             continue;
-
-//         process.state = ProcessInfo::Running;
-//     }
-
-//     ProcessTableSpinlock.release();
-//     popCLI();
-// }
-
-void runFirstProcess()
+void schedule()
 {
+    auto cpu = thisCPU();
+    cpu->currentProcess = nullptr;
+
+    while (true) {
+        asm volatile ("sti");
+
+        ProcessTableSpinlock.acquire();
+        for (auto p = ProcessTable; p < &ProcessTable[64]; p = p++) {
+            if (p->state != ProcessInfo::Runnable)
+                continue;
+
+            cpu->currentProcess = p;
+            asm volatile ("movq %0, %%cr3" :: "r" (
+                toPhysical(PhysicalMemoryManagement::HHVAddress{(uint64_t)p->pageTable})
+            ));
+            p->state = ProcessInfo::Running;
+
+            Pause(&cpu->schedulerTask, p->kernelTask);
+        }
+        ProcessTableSpinlock.release();
+    }
+}
+
+// first yield to a process's kernel task will go here
+void ProcessEntryPoint()
+{
+    ProcessTableSpinlock.release();
+}
+
+ProcessInfo* allocateProcess()
+{
+    ProcessTableSpinlock.acquire();
+
+    ProcessInfo* p = nullptr;
+    bool found = false;
+    for (p = ProcessTable; p < &ProcessTable[64]; p++)
+        if (p->state == ProcessInfo::Unused) {
+            found = true;
+            break;
+        }
+
+    if (!found) {
+        ProcessTableSpinlock.release();
+        return nullptr;
+    }
+
+    p->state = ProcessInfo::Fresh;
+    ProcessTableSpinlock.release();
+
+    p->kernelStack = PhysicalMemoryManagement::allocatePage().asPtr();
+    if (p->kernelStack == nullptr) {
+        p->state = ProcessInfo::Unused;
+        return nullptr;
+    }
+
+    char* stackPointer = (char*)p->kernelStack + PhysicalMemoryManagement::PageSize;
+
+    stackPointer -= sizeof(Traps::InterruptRegisters);
+    p->trapFrame = (Traps::InterruptRegisters*)stackPointer;
+
+    stackPointer -= sizeof(uintptr_t);
+    // *(uintptr_t*)stackPointer = (uintptr_t)TrapRet;
+
+    stackPointer -= sizeof(*p->kernelTask);
+    p->kernelTask = (KernelContext*)stackPointer;
+    memset(p->kernelTask, 0, sizeof(*p->kernelTask));
+    p->kernelTask->rip = (uintptr_t)ProcessEntryPoint;
+
+    return p;
+}
+
+void createFirstProcess()
+{
+    auto process = allocateProcess();
+
     auto page = PhysicalMemoryManagement::allocatePage();
     memcpy(page.asPtr(), (void*)MyFirstUserspace, (uintptr_t)MyFirstUserspaceEnd-(uintptr_t)MyFirstUserspace);
     const int Entrypoint = 0x1000;
 
-    ProcessManagement::ProcessInfo pi;
-    pi.pageTable = VirtualMemoryManagement::shallowCopy(VirtualMemoryManagement::KernelPageTable);
-    VirtualMemoryManagement::map(pi.pageTable, Entrypoint, PhysicalMemoryManagement::toPhysical(page).Address);
-    pi.state = ProcessManagement::ProcessInfo::Runnable;
-    ProcessTable[0] = pi;
+    memset(process->trapFrame, 0, sizeof(Traps::InterruptRegisters));
+    process->trapFrame->cs = offsetof(GDT::Table, userCode64) | GDT::Ring3;
+    process->trapFrame->ss = offsetof(GDT::Table, userData64) | GDT::Ring3;
+    process->trapFrame->rflags = 0x200; // enable interrupt
+    process->trapFrame->rsp = 0; // TODO: stack
+    process->trapFrame->rip = Entrypoint;
 
-    asm volatile ("movq %0, %%cr3" :: "r" (
-        toPhysical(PhysicalMemoryManagement::HHVAddress{(uint64_t)pi.pageTable})
-    ));
-    asm volatile ("xchgw %bx, %bx");
-    asm volatile (R"(
-        movq $0, %%r11
-        movq %0, %%rcx
-        sysretq
-    )" :: "r"(uint64_t(Entrypoint)));
+    ProcessTableSpinlock.acquire();
+    process->state = ProcessInfo::Runnable;
+    ProcessTableSpinlock.release();
 }
 
 }

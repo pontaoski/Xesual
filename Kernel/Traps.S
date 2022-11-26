@@ -155,6 +155,9 @@ TrapCommon:
     call TrapHandler
     mov %rax, %rsp
 
+.global TrapRet
+TrapRet:
+
     pop %r15
     pop %r14
     pop %r13
