@@ -48,6 +48,11 @@ Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 
 Traps::SyscallRegisters* KernelSyscallHandler(Traps::SyscallRegisters* registers)
 {
+	logfn("syscall! %llx", registers->rax);
+	while (true) {
+		asm volatile ("cli");
+		asm volatile ("hlt");
+	}
 	return registers;
 }
 

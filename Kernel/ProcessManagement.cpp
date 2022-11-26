@@ -13,6 +13,7 @@ extern void SyscallHandler();
 void __attribute__((section (".userspace"))) __attribute__((naked)) MyFirstUserspace()
 {
     asm volatile (R"(
+        nop
         mov $1, %rax
         syscall
     )");
@@ -87,22 +88,23 @@ void runFirstProcess()
 {
     auto page = PhysicalMemoryManagement::allocatePage();
     memcpy(page.asPtr(), (void*)MyFirstUserspace, (uintptr_t)MyFirstUserspaceEnd-(uintptr_t)MyFirstUserspace);
+    const int Entrypoint = 0x1000;
 
     ProcessManagement::ProcessInfo pi;
     pi.pageTable = VirtualMemoryManagement::shallowCopy(VirtualMemoryManagement::KernelPageTable);
-    VirtualMemoryManagement::map(pi.pageTable, 0x0, PhysicalMemoryManagement::toPhysical(page).Address);
-    pi.state = ProcessManagement::ProcessInfo::Running;
+    VirtualMemoryManagement::map(pi.pageTable, Entrypoint, PhysicalMemoryManagement::toPhysical(page).Address);
+    pi.state = ProcessManagement::ProcessInfo::Runnable;
     ProcessTable[0] = pi;
-    thisCPU()->currentProcess = &ProcessTable[0];
 
-    asm volatile("movq %0, %%cr3" :: "r" (
+    asm volatile ("movq %0, %%cr3" :: "r" (
         toPhysical(PhysicalMemoryManagement::HHVAddress{(uint64_t)pi.pageTable})
     ));
+    asm volatile ("xchgw %bx, %bx");
     asm volatile (R"(
         movq $0, %%r11
         movq %0, %%rcx
-        sysret
-    )" :: "r"(uint64_t(0x0)));
+        sysretq
+    )" :: "r"(uint64_t(Entrypoint)));
 }
 
 }

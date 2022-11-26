@@ -188,17 +188,16 @@ void disableAllLegacyInterrupts()
 }
 
 void SharedMain() {
-    logfn("stack! %d\n", LocalAPIC::lapicID());
-    ProcessManagement::thisCPU()->stack = PhysicalMemoryManagement::allocatePages(ProcessManagement::StackSize).asPtr();
-    logfn("init! %d\n", LocalAPIC::lapicID());
+    logfn("Booting processor %d!\n", LocalAPIC::lapicID());
+    ProcessManagement::thisCPU()->stack = PhysicalMemoryManagement::allocatePages(ProcessManagement::StackSize / PhysicalMemoryManagement::PageSize).asPtr();
+    if (ProcessManagement::thisCPU()->stack == nullptr) {
+        logfn("failed to allocate a stack\n");
+        halt();
+    }
     ProcessManagement::thisCPU()->table.init((uintptr_t)ProcessManagement::thisCPU()->stack);
-    logfn("install! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->table.install();
-    logfn("gsbase! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->setKernelGSBase();
-    logfn("syscall rip! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->setSyscallRIP();
-    logfn("star register! %d\n", LocalAPIC::lapicID());
     ProcessManagement::thisCPU()->setStarRegister();
 
     Traps::loadIDTTable();

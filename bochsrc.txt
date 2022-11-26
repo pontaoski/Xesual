@@ -1,5 +1,6 @@
 ata0-slave: type=cdrom, path=default/SystemImage.579f7f9e/Xesual.iso, status=inserted
 boot: cdrom
+magic_break: enabled=1
 
 # gdbstub: enabled=1, port=1234
 display_library: x, options="gui_debug"
