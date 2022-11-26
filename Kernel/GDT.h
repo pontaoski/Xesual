@@ -242,7 +242,17 @@ struct Table {
             : : "r"(&ptr)
         );
 
-        // load segment registers
+        // load code segment registers
+        asm volatile (R"(
+            push %0
+            lea (.farJumpDestination), %%rax
+            push %%rax
+            lretq
+        
+        .farJumpDestination:
+        )" :: "r"(offsetof(Table, kernelCode)));
+
+        // load data segment registers
         asm volatile (
             "mov %0, %%rax\n"
             "mov %%rax, %%ds\n"
