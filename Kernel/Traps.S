@@ -189,7 +189,7 @@ SyscallHandler:
     // load the address of thisCPU offset 0 to rax
     mov %rsp, %gs:UserStackOffset
     // load kernel stack offset into rsp
-    mov %gs:KernelStackOffset, %rsp
+    mov %gs:KernelInterruptStackOffset, %rsp
 
     // now we can push
     push %rax

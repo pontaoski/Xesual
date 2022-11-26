@@ -21,7 +21,7 @@ struct CPUState {
     int32_t cliCount;
     bool wereInterruptsEnabled;
     ProcessInfo* currentProcess;
-    void* stack;
+    void* interruptStack;
     GDT::Table table;
 
     /// used for preserving in syscalls
@@ -33,7 +33,7 @@ struct CPUState {
 };
 
 static_assert(UserStackOffset == offsetof(CPUState, userStack));
-static_assert(KernelStackOffset == offsetof(CPUState, stack));
+static_assert(KernelInterruptStackOffset == offsetof(CPUState, interruptStack));
 
 struct ProcessInfo {
     enum State {

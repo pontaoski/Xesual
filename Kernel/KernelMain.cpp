@@ -189,12 +189,12 @@ void disableAllLegacyInterrupts()
 
 void SharedMain() {
     logfn("Booting processor %d!\n", LocalAPIC::lapicID());
-    ProcessManagement::thisCPU()->stack = PhysicalMemoryManagement::allocatePages(ProcessManagement::StackSize / PhysicalMemoryManagement::PageSize).asPtr();
-    if (ProcessManagement::thisCPU()->stack == nullptr) {
+    ProcessManagement::thisCPU()->interruptStack = PhysicalMemoryManagement::allocatePages(ProcessManagement::StackSize / PhysicalMemoryManagement::PageSize).asPtr();
+    if (ProcessManagement::thisCPU()->interruptStack == nullptr) {
         logfn("failed to allocate a stack\n");
         halt();
     }
-    ProcessManagement::thisCPU()->table.init((uintptr_t)ProcessManagement::thisCPU()->stack);
+    ProcessManagement::thisCPU()->table.init((uintptr_t)ProcessManagement::thisCPU()->interruptStack);
     ProcessManagement::thisCPU()->table.install();
     ProcessManagement::thisCPU()->setKernelGSBase();
     ProcessManagement::thisCPU()->setSyscallRIP();
