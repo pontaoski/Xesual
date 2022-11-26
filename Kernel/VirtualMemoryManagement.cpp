@@ -85,6 +85,7 @@ void map(PageTableRef root, uint64_t virtualAddress, uint64_t toPhysical)
     level1Address[level1Index].hl.physicalAddress = (toPhysical >> PageShift);
     level1Address[level1Index].hl.isPresent = true;
     level1Address[level1Index].hl.isWritable = true;
+    level1Address[level1Index].hl.isUserAccessible = true;
 }
 
 PageTableRef shallowCopy(PageTableRef root)
