@@ -31,13 +31,13 @@ Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 		if (ProcessManagement::thisCPU()->currentProcess == nullptr || registers->cs == offsetof(GDT::Table, kernelCode)) {
 			PanicExclamationExclamation("GPF in kernel code", registers);
 		}
-		// TODO: kill userspace
+		ProcessManagement::exitCurrentProcess();
 		break;
 	case Exceptions::PageFault:
 		if (ProcessManagement::thisCPU()->currentProcess == nullptr || registers->cs == offsetof(GDT::Table, kernelCode)) {
 			PanicExclamationExclamation("Page fault in kernel code", registers);
 		}
-		// TODO: kill userspace
+		ProcessManagement::exitCurrentProcess();
 		break;
 	}
 	default:
@@ -48,11 +48,7 @@ Traps::InterruptRegisters* TrapHandler(Traps::InterruptRegisters* registers)
 
 Traps::SyscallRegisters* KernelSyscallHandler(Traps::SyscallRegisters* registers)
 {
-	logfn("syscall! %llx", registers->rax);
-	while (true) {
-		asm volatile ("cli");
-		asm volatile ("hlt");
-	}
+	logfn("syscall! %llx\n", registers->rax);
 	return registers;
 }
 

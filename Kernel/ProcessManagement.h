@@ -67,6 +67,9 @@ void init();
 void schedule();
 void createFirstProcess();
 ProcessInfo* allocateProcess();
+void exitCurrentProcess();
+void enterSchedulerFromProcess();
+void freeProcess(ProcessInfo* proc);
 
 inline CPUState* thisCPU()
 {

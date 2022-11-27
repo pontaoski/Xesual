@@ -223,6 +223,7 @@ struct Table {
         userCode64 = UserEntry(0xffffffff, 0, UserAccessByte(CodeAllowRead, CodeSeg, Ring3), Flags::longModeCode());
         userData64 = UserEntry(0xffffffff, 0, UserAccessByte(DataAllowWrite, DataSeg, Ring3), Flags(Bit32, Byte));
         theEntryForTheTSS = SystemEntry(sizeof(theTSSEntryItself), (uint64_t)&theTSSEntryItself, SystemAccessByte(AvailableTSS, Ring0), Flags());
+        theTSSEntryItself.stackPointers[0] = stackLocation;
     }
     void install()
     {

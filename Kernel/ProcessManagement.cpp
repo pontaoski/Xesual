@@ -19,6 +19,10 @@ void __attribute__((section (".userspace"))) __attribute__((naked)) MyFirstUsers
         nop
         mov $1, %rax
         syscall
+        nop
+        mov $2, %rax
+        syscall
+        nop
     )");
 }
 
@@ -96,6 +100,20 @@ void init() {
     memset(ProcessTable, 0, sizeof(ProcessInfo) * 64);
 }
 
+void exitCurrentProcess()
+{
+    auto cpu = thisCPU();
+    freeProcess(cpu->currentProcess);
+    enterSchedulerFromProcess();
+}
+
+void enterSchedulerFromProcess()
+{
+    auto cpu = thisCPU();
+
+    Pause(&cpu->currentProcess->kernelTask, cpu->schedulerTask);
+}
+
 void schedule()
 {
     auto cpu = thisCPU();
@@ -126,6 +144,16 @@ void schedule()
 // first yield to a process's kernel task will go here
 void ProcessEntryPoint()
 {
+    ProcessTableSpinlock.release();
+}
+
+void freeProcess(ProcessInfo* proc)
+{
+    ProcessTableSpinlock.acquire();
+
+    proc->state = ProcessInfo::Unused;
+    PhysicalMemoryManagement::freePage((uintptr_t)proc->kernelStack);
+
     ProcessTableSpinlock.release();
 }
 
