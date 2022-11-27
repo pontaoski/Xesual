@@ -204,8 +204,7 @@ void SharedMain() {
     ProcessManagement::popCLI();
 
     logfn("Processor %d is now going to schedule processes!\n", LocalAPIC::lapicID());
-    halt();
-    // ProcessManagement::schedule();
+    ProcessManagement::schedule();
 }
 
 extern "C" void OtherProcessorMain(limine_smp_info*) {
@@ -241,6 +240,8 @@ extern "C" void KernelMain() {
 
     disableAllLegacyInterrupts();
     LocalAPIC::initLAPIC();
+
+    ProcessManagement::createFirstProcess();
 
     SharedMain();
 }

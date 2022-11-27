@@ -108,6 +108,7 @@ void schedule()
         for (auto p = ProcessTable; p < &ProcessTable[64]; p = p++) {
             if (p->state != ProcessInfo::Runnable)
                 continue;
+            logfn("found a process to run! :)\n");
 
             cpu->currentProcess = p;
             asm volatile ("movq %0, %%cr3" :: "r" (
@@ -115,6 +116,7 @@ void schedule()
             ));
             p->state = ProcessInfo::Running;
 
+            logfn("sweeetch! :)\n");
             Pause(&cpu->schedulerTask, p->kernelTask);
         }
         ProcessTableSpinlock.release();
@@ -144,6 +146,8 @@ ProcessInfo* allocateProcess()
         return nullptr;
     }
 
+    p->pageTable = VirtualMemoryManagement::shallowCopy(VirtualMemoryManagement::KernelPageTable);
+
     p->state = ProcessInfo::Fresh;
     ProcessTableSpinlock.release();
 
@@ -159,7 +163,7 @@ ProcessInfo* allocateProcess()
     p->trapFrame = (Traps::InterruptRegisters*)stackPointer;
 
     stackPointer -= sizeof(uintptr_t);
-    // *(uintptr_t*)stackPointer = (uintptr_t)TrapRet;
+    *(uintptr_t*)stackPointer = (uintptr_t)TrapRet;
 
     stackPointer -= sizeof(*p->kernelTask);
     p->kernelTask = (KernelContext*)stackPointer;
@@ -176,6 +180,8 @@ void createFirstProcess()
     auto page = PhysicalMemoryManagement::allocatePage();
     memcpy(page.asPtr(), (void*)MyFirstUserspace, (uintptr_t)MyFirstUserspaceEnd-(uintptr_t)MyFirstUserspace);
     const int Entrypoint = 0x1000;
+
+    VirtualMemoryManagement::map(process->pageTable, Entrypoint, PhysicalMemoryManagement::toPhysical(page).Address);
 
     memset(process->trapFrame, 0, sizeof(Traps::InterruptRegisters));
     process->trapFrame->cs = offsetof(GDT::Table, userCode64) | GDT::Ring3;
