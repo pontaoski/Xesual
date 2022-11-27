@@ -1,6 +1,7 @@
 #include "Limine/limine.h"
 #include "LocalAPIC.h"
 #include "MiscFunctions.h"
+#include "PCI.h"
 #include "PhysicalMemoryManagement.h"
 #include "VirtualMemoryManagement.h"
 #include "Paging.h"
@@ -202,6 +203,10 @@ void SharedMain() {
 
     Traps::loadIDTTable();
     ProcessManagement::popCLI();
+
+    PCI::scan([](uint32_t dev, uint16_t vid, uint16_t did, void*) {
+        logfn("Addr %llx, Vendor %llx, Device %llx\n", dev, vid, did);
+    }, nullptr);
 
     logfn("Processor %d is now going to schedule processes!\n", LocalAPIC::lapicID());
     ProcessManagement::schedule();
