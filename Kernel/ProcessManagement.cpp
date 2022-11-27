@@ -88,7 +88,7 @@ void CPUState::setStarRegister()
     const uint32_t KernelSelector = offsetof(GDT::Table, kernelCode) | GDT::Ring0;
     const uint32_t UserSelector = offsetof(GDT::Table, userCode32) | GDT::Ring3;
 
-    cpuSetMSR(StarRegister, 0, KernelSelector | (UserSelector >> 16));
+    cpuSetMSR(StarRegister, 0, KernelSelector | (UserSelector << 16));
 }
 
 void init() {
