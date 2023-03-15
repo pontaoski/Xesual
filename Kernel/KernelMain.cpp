@@ -1,3 +1,4 @@
+#include "Graphics.h"
 #include "Limine/limine.h"
 #include "LocalAPIC.h"
 #include "MiscFunctions.h"
@@ -206,6 +207,24 @@ void SharedMain() {
 
     PCI::scan([](uint32_t dev, uint16_t vid, uint16_t did, void*) {
         logfn("Addr %llx, Vendor %llx, Device %llx\n", dev, vid, did);
+        if (vid == 0x1234 && did == 0x1111) {
+            logfn("That's a qemu!\n");
+            const auto ddev = Graphics::BochsDisplayDevice(dev);
+            const auto fb = ddev.framebufferAddress();
+            const auto xres = ddev.read(Graphics::XRes);
+            const auto yres = ddev.read(Graphics::YRes);
+            const auto bpp = ddev.read(Graphics::BPP);
+
+            auto pix = (uint32_t*)fb;
+            for (int y = 0; y < yres; y++) {
+                for (int x = 0; x < xres; x++) {
+                    pix[x + y*xres] = 0x3DAEE9;
+                }
+            }
+
+            logfn("The framebuffer is at 0x%llx\n", fb);
+            logfn("The resolution is %d x %d (bpp %d)\n", xres, yres, bpp);
+        }
     }, nullptr);
 
     logfn("Processor %d is now going to schedule processes!\n", LocalAPIC::lapicID());
